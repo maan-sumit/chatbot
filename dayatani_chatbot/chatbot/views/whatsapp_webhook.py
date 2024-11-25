@@ -145,6 +145,19 @@ class WhatsappModelViewSet(ModelViewSet):
             elif message_type == 'image':
                 image_data = data["entry"][0]["changes"][0]["value"]['messages'][0]['image']
                 self.handle_image_message(image_data,request,phone_no)
+            elif message_type == 'button':
+                payload = data["entry"][0]["changes"][0]["value"]['messages'][0]['button']['payload']
+                self.handle_button_message(payload,request,phone_no)
+    
+    @classmethod
+    def handle_button_message(self, payload, request, phone_no):
+        user = self.get_user_from_id(request['user'])
+        if payload:
+            if payload in (Constant.WEATHER_UNSUBSCRIBE_PAYLOAD, Constant.CONTENT_UNSUBSCRIBE_PAYLOAD):
+                user_whatsapp_info, created = UserWhatsappInfo.objects.get_or_create(user=user)
+                setattr(user_whatsapp_info, 'unsubscribe', True)
+                user_whatsapp_info.save()
+                self.send_whatsapp_messsage(phone_no=phone_no, message=Constant.WHATSAPP_UNSUBSCRIBE_NOTIFICATION_MSG)            
 
 
     @classmethod
@@ -197,7 +210,7 @@ class WhatsappModelViewSet(ModelViewSet):
                 json_data = json.loads(json_data)
             
             whatsapp_info_data = {}
-            for field in ['name', 'profession', 'land_size', 'crop_growing', 'soil_type', 'latitude', 'longitude']:
+            for field in ['name', 'profession', 'land_size', 'crop_growing', 'soil_type', 'latitude', 'longitude','unsubscribe']:
                 if field in json_data:
                     whatsapp_info_data[field] = json_data[field]
 
@@ -205,7 +218,10 @@ class WhatsappModelViewSet(ModelViewSet):
             for key, value in whatsapp_info_data.items():
                 setattr(user_whatsapp_info, key, value)
             user_whatsapp_info.save()
-            self.handle_user_query(phone_no, "try again", request) #send reply after save
+            if field == 'unsubscribe':
+                self.send_whatsapp_messsage(phone_no=phone_no,message=Constant.WHATSAPP_UNSUBSCRIBE_NOTIFICATION_MSG)
+            else:
+                self.handle_user_query(phone_no, "try again", request) #send reply after save
         except Exception as e:
             print('the exception', e)
 

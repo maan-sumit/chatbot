@@ -12,6 +12,7 @@ class UserWhatsappInfo(BaseModel):
     soil_type = models.CharField(max_length=400, null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    unsubscribe = models.BooleanField(default=False)
 
     @property
     def location(self):

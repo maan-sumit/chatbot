@@ -109,10 +109,11 @@ class DayatanLLMCore:
 
         history = ChatMessageHistory()
         for chat in chat_history:
-            if chat["role"] == "user":
-                history.add_user_message(chat["conversations"])
-            elif chat["role"] == "agent":
-                history.add_ai_message(chat["conversations"])
+            if chat["role"] and chat["conversations"]:
+                if chat["role"] == "user":
+                    history.add_user_message(chat["conversations"])
+                elif chat["role"] == "agent":
+                    history.add_ai_message(chat["conversations"])
 
         return history
 

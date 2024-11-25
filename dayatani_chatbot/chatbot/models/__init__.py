@@ -9,3 +9,4 @@ from .file_training_status import FileTrainingStatus
 from .logs import Logs
 from .user_whatsapp_info import UserWhatsappInfo
 from .whatsapp_flow import WhatsappFlow
+from .whatsapp_cron_content import WhatsappCronContent

@@ -10,10 +10,10 @@ from dayatani_llm_core.constant import (
 )
 
 
-def get_api_response(latitude, longitude, place, type):
+def get_api_response(latitude, longitude, place, type, language_code):
     api_key = os.environ["OPENWEATHERMAP_API_KEY"]
     base_url = "http://api.openweathermap.org/data/2.5/forecast"
-    params = {"appid": api_key, "units": "metric"}
+    params = {"appid": api_key, "units": "metric", "lang": language_code}
 
     # customize request based on place name or cordinate
     if type == "CORDINATE":
@@ -94,16 +94,16 @@ def parse_weather_data(data):
     )
 
 
-def get_weather(latitude: int, longitude: int) -> str:
+def get_weather(latitude: int, longitude: int, language_code:str="en") -> str:
     data = get_api_response(
-        latitude=latitude, longitude=longitude, place=None, type="CORDINATE"
+        latitude=latitude, longitude=longitude, place=None, type="CORDINATE", language_code=language_code
     )
     weather_info = parse_weather_data(data)
     return weather_info
 
 
-def get_weather_by_location_name(place):
-    data = get_api_response(latitude=None, longitude=None, place=place, type="PLACE")
+def get_weather_by_location_name(place, language_code:str="en"):
+    data = get_api_response(latitude=None, longitude=None, place=place, type="PLACE", language_code=language_code)
     weather_info = parse_weather_data(data)
     return weather_info
 

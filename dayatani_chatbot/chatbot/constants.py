@@ -17,5 +17,10 @@ class Constant:
     WHATSAPP_AUDIO_ERROR = "Sorry, I am not able to parse this audio messsage. Can you ask the question again."
     TEMP_DIR = 'temp'
     WHATSAPP_IMAGE_ERROR = 'Sorry, I am not able to parse this image. Can you please ask the question again.'
+    WHATSAPP_UNSUBSCRIBE_NOTIFICATION_MSG='You are successfully unsubscribed from the weekly updates.'
+    WEATHER_UNSUBSCRIBE_PAYLOAD = 'WEATHER_UNSUBSCRIBE'
+    CONTENT_UNSUBSCRIBE_PAYLOAD = 'CONTENT_UNSUBSCRIBE'
+    WEATHER_DEFAULT_LOCATION_MSG = 'This report uses default location Garut. Please share your location to receive accurate weather report.'
+    WEATHER_DEFAULT_LOCATION_MSG_INDO = 'Laporan ini menggunakan lokasi default Garut. Silakan bagikan lokasi Anda untuk menerima laporan cuaca yang akurat.'
 
 

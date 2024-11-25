@@ -114,8 +114,8 @@ class SSOBearerAuthentication(authentication.BaseAuthentication):
                 
                 if response.status_code == 200:
                     user_data = response.json()
-                    client_id = user_data['id']
-                    chatbot_configurations = json.loads(decrypt_message(user_data['chatbot_configurations']))
+                    client_id = user_data['data']['id']
+                    chatbot_configurations = json.loads(decrypt_message(user_data['data']['chatbot_configurations']))
                     
                     user, created = UserModel.objects.get_or_create(sso_uid=client_user_id, client_id=client_id)
                     if created:
