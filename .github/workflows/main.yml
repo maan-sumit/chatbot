@@ -1,0 +1,97 @@
+name: Chatbot
+on:
+  push:
+    branches:
+      - develop
+      - staging
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    # env:
+    #   ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      # - name: Inject slug/short variables
+      #   uses: rlespinasse/github-slug-action@v3.x
+
+      # - name: Set Host
+      #   run: |
+      #     echo "::set-env name=HOST::${GITHUB_REF_SLUG}_SSH_HOST"
+      #     echo "::set-env name=KEY::${GITHUB_REF_SLUG}_SSH_KEY"
+      #     echo "::set-env name=USER::${GITHUB_REF_SLUG}_SSH_USER"
+      #     echo "::set-env name=SLACK_WEBHOOK_URL::${GITHUB_REF_SLUG}_SLACK_WEBHOOK_URL"
+      #     echo "::set-env name=BRANCH::${GITHUB_REF_SLUG}"
+
+      - name: Branch Name
+        run: |
+          echo "Host: $GITHUB_REF_NAME"
+
+      - name: Setup of the enviroment 
+        run: |
+            if [ "${GITHUB_REF_NAME}" == "prod" ]; then
+              echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+            
+            elif [ "${GITHUB_REF_NAME}" == "staging" ]; then
+              echo "ENVIRONMENT=stage" >> $GITHUB_ENV
+            else
+              echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            fi
+            
+      - name: Setting up environment variables
+        run: |
+            echo "SERVER_HOST=${ENVIRONMENT}_SSH_HOST" >> $GITHUB_ENV
+            echo "KEY=${ENVIRONMENT}_SSH_KEY" >> $GITHUB_ENV
+            echo "USER=${ENVIRONMENT}_SSH_USER" >> $GITHUB_ENV
+            echo "SLACK_WEBHOOK_URL=${ENVIRONMENT}_SLACK_WEBHOOK_URL" >> $GITHUB_ENV
+            echo "BRANCH=${ENVIRONMENT}" >> $GITHUB_ENV
+      
+
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v3
+          
+        
+      - name: 'Setup Azure Container Registry'
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: "Build and push Docker image"
+        run: |
+          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/chatbot:${{env.ENVIRONMENT}}-${{ github.run_number }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/chatbot:${{env.ENVIRONMENT}}-${{ github.run_number }}
+    
+
+      - name: Deploy container to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets[env.SERVER_HOST] }}
+          username: ${{ secrets[env.USER] }}
+          key: ${{ secrets[env.KEY] }}
+          script: |
+            cd /home/ubuntu/services/dayatani-chatbot
+            # BUILD_NUMBER=${{ github.run_number }} docker-compose up -d
+            /bin/bash workflow_helper.sh ${{ github.run_number }}
+
+      - name: Send Slack notification
+        if: always()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets[env.SLACK_WEBHOOK_URL] }}
+          SLACK_MESSAGE: "Status: ${{ job.status }}\nBranch: ${{ env.GITHUB_REF_NAME }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+          SLACK_FOOTER: "Dayatani"
+          SLACK_COLOR: ${{ job.status }}
+          MSG_MINIMAL: event,actions url
+
+      - name: Send Slack notification
+        if: always()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL_DAYATANI }} 
+          SLACK_MESSAGE: "Status: ${{ job.status }}\nBranch: ${{ env.GITHUB_REF_NAME }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+          SLACK_FOOTER: "Dayatani"
+          SLACK_COLOR: ${{ job.status }}
+          MSG_MINIMAL: event,actions url
